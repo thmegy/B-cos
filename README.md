@@ -1,3 +1,9 @@
+# Command to run on Cracks dataset
+
+```
+python experiments/Cracks/bcos/model.py --experiment_name=inception_v3 --dataset_name Cracks --model_config experiments/Cracks/bcos
+```
+
 # B-cos Networks: Alignment is All We Need for Interpretability
 
 M. Böhle, M. Fritz, B. Schiele. **B-cos Networks: Alignment is All we Need for Interpretability**. CVPR, 2022.
