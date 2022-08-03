@@ -3,7 +3,8 @@ import os
 import torch
 from torch import nn
 from torch.nn.parallel import DistributedDataParallel
-
+import os, sys
+sys.path.insert(1, os.getcwd())
 from experiment_utils import get_arguments
 from models.baselines.pretrained import MyVGG11, MyResNet34, MyDenseNet121, MyInception
 from models.bcos.densenet import densenet121

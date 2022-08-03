@@ -24,10 +24,9 @@ class TopKAcc:
             _, pred = model_out.topk(maxk, 1, True, True)
             pred = pred.t()
             correct = pred.eq(target.view(1, -1).expand_as(pred))
-
             res = dict()
             for k in self.topk:
-                correct_k = correct[:k].view(-1).float().sum(0)
+                correct_k = correct[:k].reshape(-1).float().sum(0)
                 _res = float(to_numpy((correct_k/batch_size)))
                 if k == 1:
                     res["accuracy"] = _res

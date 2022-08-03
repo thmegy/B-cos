@@ -4,7 +4,8 @@ import warnings
 import torch
 from torch import nn, Tensor
 import torch.nn.functional as F
-from torchvision.models.utils import load_state_dict_from_url
+#from torchvision.models.utils import load_state_dict_from_url
+from torch.hub import load_state_dict_from_url
 from typing import Callable, Any, Optional, Tuple, List
 from modules.bcosconv2d import BcosConv2d
 
@@ -67,7 +68,7 @@ class Inception3(nn.Module):
 
     def __init__(
         self,
-        num_classes: int = 1000,
+        num_classes: int = 6   ,
         aux_logits: bool = False,
         transform_input: bool = False,
         inception_blocks: Optional[List[Callable[..., nn.Module]]] = None,

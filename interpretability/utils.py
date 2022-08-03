@@ -68,7 +68,6 @@ def grad_to_img(img, linear_mapping, smooth=15, alpha_percentile=99.5):
         alpha = F.avg_pool2d(alpha, smooth, stride=1, padding=(smooth-1)//2)
     alpha = to_numpy(alpha)
     alpha = (alpha / np.percentile(alpha, alpha_percentile)).clip(0, 1)
-
     rgb_grad = np.concatenate([rgb_grad, alpha], axis=0)
     # Reshaping to [H, W, C]
     grad_image = rgb_grad.transpose((1, 2, 0))

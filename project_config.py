@@ -1,6 +1,7 @@
 import os
 
-DATA_ROOT = os.environ.get("DATA_ROOT_PATH")
+#DATA_ROOT = os.environ.get("DATA_ROOT_PATH")
+DATA_ROOT = 'data'
 LOG_PATH = os.environ.get("LOG_PATH")
 CURR_EXP_PATH = os.environ.get("CURR_EXP_PATH")
 QUEUE_EXP_PATH = os.environ.get("QUEUE_EXP_PATH")

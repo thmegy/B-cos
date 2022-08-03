@@ -2,7 +2,7 @@ import torch
 from torchvision import transforms
 from copy import copy
 
-from data.datasets import TinyImagenet, Imagenet, MNIST, CIFAR10
+from data.datasets import TinyImagenet, Imagenet, MNIST, CIFAR10, Cracks
 from data.data_transforms import OneHot, NoTransform, MyToTensor
 from torch.utils.data import DataLoader
 
@@ -16,6 +16,7 @@ class Data:
         "CIFAR10": CIFAR10,
         "TinyImagenet": TinyImagenet,
         "Imagenet": Imagenet,
+        "Cracks": Cracks,
     }
 
     default_params = {
@@ -56,7 +57,6 @@ class Data:
         """
         assert dataset_name in Data.datasets, ("Dataset not recognised, available datasets are "
                                                + ", ".join([s for s in Data.datasets.keys()]))
-
         # Overwrite default parameters
         self.params = copy(Data.default_params)
         for key in Data.default_params.keys():

@@ -5,7 +5,8 @@ import torch.nn as nn
 
 from data.data_transforms import AddInverse
 from modules.bcosconv2d import BcosConv2d
-from torchvision.models.utils import load_state_dict_from_url
+#from torchvision.models.utils import load_state_dict_from_url
+from torch.hub import load_state_dict_from_url
 from typing import Type, Any, Callable, Union, List, Optional
 
 
@@ -134,7 +135,7 @@ class ResNet(nn.Module):
         self,
         block: Type[Union[BasicBlock, Bottleneck]],
         layers: List[int],
-        num_classes: int = 1000,
+        num_classes: int = 6,
         zero_init_residual: bool = False,
         groups: int = 1,
         width_per_group: int = 64,
