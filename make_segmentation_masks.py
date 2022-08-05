@@ -17,6 +17,7 @@ from data.data_handler import Data
 from data.data_transforms import AddInverse
 from interpretability.utils import grad_to_img, explanation_mode
 from project_utils import to_numpy, to_numpy_img
+from data.data_transforms import MyToTensor
 
 
 
@@ -33,14 +34,24 @@ def main(args):
     data_loader = data.get_test_loader()
 
     model = get_model(exp_params).cuda()
-
-    class_to_idx = {'Arrachement_pelade':0,
-                    'Faiencage':1,
-                    'Nid_de_poule':2,
-                    'Transversale':3,
-                    'Longitudinale':4,
-                    'Reparation':5}
+    explanation_mode(model, True)
+    t = transforms.Compose([transforms.Resize(320), MyToTensor()])
     
+    # there is a mismatch in class indices between dataset used inthe bcos training and what is expected in mmsegmentation --> two separate dicts
+    class_to_idx_mask = {'Arrachement_pelade':0,
+                         'Faiencage':1,
+                         'Nid_de_poule':2,
+                         'Transversale':3,
+                         'Longitudinale':4,
+                         'Reparation':5}
+
+    class_to_idx_bcos = {'Arrachement_pelade':0,
+                         'Faiencage':1,
+                         'Longitudinale':2,
+                         'Nid_de_poule':3,
+                         'Reparation':4,
+                         'Transversale':5}
+
     # get names of images from detection dataset
     images_detection = glob.glob(f'{args.impath_detection}/*.jpg')
 
@@ -57,11 +68,12 @@ def main(args):
         for imc in images_cropped:
             # get class index based on the name of the directory where is image is
             class_name = imc.split('/')[-2]
-            target_class = class_to_idx[class_name]
+            target_class = class_to_idx_bcos[class_name] # class id from bcos dataset
+            output_class = class_to_idx_mask[class_name] # class id expected by dataset in mmsegmentation
             
             im = Image.open(imc)
             im_w, im_h = im.size
-            im = data_loader.dataset.transform(im)[None,:,:,:].cuda()
+            im = t(im)[None,:,:,:].cuda()
 
             model.zero_grad()
             _im = Variable(AddInverse()(im), requires_grad=True)
@@ -69,8 +81,8 @@ def main(args):
             pred[target_class].backward()
             w = _im.grad[0]
 
-            mask = grad_to_img(_im[0], w, smooth=35, alpha_percentile=90) # get activation map
-            mask = np.where(mask[:,:,3]>0.2, target_class+1, 0).astype(np.uint8) # keep only most activated pixels
+            mask = grad_to_img(_im[0], w, smooth=35, alpha_percentile=99.5) # get activation map
+            mask = np.where(mask[:,:,3]>0.2, output_class+1, 0).astype(np.uint8) # keep only most activated pixels
             mask = cv2.resize(mask,
                                None,
                                fx=im_w / mask.shape[1],
