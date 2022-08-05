@@ -58,46 +58,54 @@ def main(args):
     for imd in tqdm.tqdm(images_detection):
         # get cropped images from a given detection image
         imd_name = imd.split('/')[-1]
-        images_cropped = glob.glob(f'{args.impath_cropped}/*/{imd_name.replace(".jpg","")}*.jpg')
 
         # prepare overall segmentation mask
         imd_size = imagesize.get(imd)
         segmentation_mask = np.zeros((imd_size[1], imd_size[0]))
         
-        # extract segmentation mask for cropped image
-        for imc in images_cropped:
-            # get class index based on the name of the directory where is image is
-            class_name = imc.split('/')[-2]
-            target_class = class_to_idx_bcos[class_name] # class id from bcos dataset
-            output_class = class_to_idx_mask[class_name] # class id expected by dataset in mmsegmentation
+        # loop on classes
+        for c in class_to_idx_mask.keys():
+            target_class = class_to_idx_bcos[c] # class id from bcos dataset
+            output_class = class_to_idx_mask[c] # class id expected by dataset in mmsegmentation
             
-            im = Image.open(imc)
-            im_w, im_h = im.size
-            im = t(im)[None,:,:,:].cuda()
+            images_cropped = glob.glob(f'{args.impath_cropped}/{c}/{imd_name.replace(".jpg","")}*.jpg')
 
-            model.zero_grad()
-            _im = Variable(AddInverse()(im), requires_grad=True)
-            pred = model(_im)[0, :]
-            pred[target_class].backward()
-            w = _im.grad[0]
+            segmentation_mask_class = np.zeros((imd_size[1], imd_size[0]))
 
-            mask = grad_to_img(_im[0], w, smooth=35, alpha_percentile=99.5) # get activation map
-            mask = np.where(mask[:,:,3]>0.2, output_class+1, 0).astype(np.uint8) # keep only most activated pixels
-            mask = cv2.resize(mask,
-                               None,
-                               fx=im_w / mask.shape[1],
-                               fy=im_h / mask.shape[0],
-                               interpolation=cv2.INTER_NEAREST)
+            # extract segmentation mask for cropped image
+            for imc in images_cropped:
+                
+                im = Image.open(imc)
+                im_w, im_h = im.size
+                im = t(im)[None,:,:,:].cuda()
 
-            with open(imc.replace('.jpg', '.txt'), 'r') as f:
-                position = f.readlines()[0]
-                x1, y1, x2, y2 = position.split(' ')
+                model.zero_grad()
+                _im = Variable(AddInverse()(im), requires_grad=True)
+                pred = model(_im)[0, :]
+                pred[target_class].backward()
+                w = _im.grad[0]
 
-            segmentation_mask[int(y1):int(y2), int(x1):int(x2)] = mask
+                mask = grad_to_img(_im[0], w, smooth=35, alpha_percentile=99.5) # get activation map
+                mask = np.where(mask[:,:,3]>0.2, output_class+1, 0).astype(np.uint8) # keep only most activated pixels
+                mask = cv2.resize(mask,
+                                  None,
+                                  fx=im_w / mask.shape[1],
+                                  fy=im_h / mask.shape[0],
+                                  interpolation=cv2.INTER_NEAREST)
+                
+                with open(imc.replace('.jpg', '.txt'), 'r') as f:
+                    position = f.readlines()[0]
+                    x1, y1, x2, y2 = position.split(' ')
 
-            cv2.imwrite(imd.replace(args.impath_detection, args.output).replace('.jpg', '.png'), segmentation_mask)
+                segmentation_mask_class[int(y1):int(y2), int(x1):int(x2)] += mask
+                
 
-            torch.cuda.empty_cache()
+            segmentation_mask = np.where(segmentation_mask_class>0, output_class+1, segmentation_mask)
+
+        cv2.imwrite(imd.replace(args.impath_detection, args.output+'/').replace('.jpg', '.png'), segmentation_mask)
+        
+        torch.cuda.empty_cache()
+
 
                 
 if __name__ == "__main__":
