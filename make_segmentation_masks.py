@@ -98,13 +98,13 @@ def main(args):
                     x1, y1, x2, y2 = position.split(' ')
 
                 segmentation_mask_class[int(y1):int(y2), int(x1):int(x2)] += mask
+                torch.cuda.empty_cache()
                 
 
             segmentation_mask = np.where(segmentation_mask_class>0, output_class+1, segmentation_mask)
 
         cv2.imwrite(imd.replace(args.impath_detection, args.output+'/').replace('.jpg', '.png'), segmentation_mask)
         
-        torch.cuda.empty_cache()
 
 
                 

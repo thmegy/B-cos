@@ -48,9 +48,9 @@ def initialise(get_model, params, ddp_rank, world_size):
         if exp_params["virtual_batch_size"] is not None:
             exp_params["virtual_batch_size"] = exp_params["virtual_batch_size"] / world_size
 
-    elif torch.cuda.device_count() > 1:
-        network = nn.DataParallel(network)
-        network = network.cuda()
+#    elif torch.cuda.device_count() > 1:
+ #       network = nn.DataParallel(network)
+ #       network = network.cuda()
     else:
         network = network.cuda()
 
