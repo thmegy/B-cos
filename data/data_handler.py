@@ -2,7 +2,7 @@ import torch
 from torchvision import transforms
 from copy import copy
 
-from data.datasets import TinyImagenet, Imagenet, MNIST, CIFAR10, Cracks
+from data.datasets import TinyImagenet, Imagenet, MNIST, CIFAR10, Cracks, voc
 from data.data_transforms import OneHot, NoTransform, MyToTensor
 from torch.utils.data import DataLoader
 
@@ -17,6 +17,7 @@ class Data:
         "TinyImagenet": TinyImagenet,
         "Imagenet": Imagenet,
         "Cracks": Cracks,
+        "voc": voc,
     }
 
     default_params = {

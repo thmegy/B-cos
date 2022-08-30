@@ -68,7 +68,7 @@ class Inception3(nn.Module):
 
     def __init__(
         self,
-        num_classes: int = 6   ,
+        num_classes: int = 20   ,
         aux_logits: bool = False,
         transform_input: bool = False,
         inception_blocks: Optional[List[Callable[..., nn.Module]]] = None,
