@@ -12,10 +12,10 @@ from torchvision import transforms
 import tqdm
 import imagesize
 
-#from experiments.Cracks.bcos.model import get_model
-#from experiments.Cracks.bcos.experiment_parameters import exps
-from experiments.voc.bcos.model import get_model
-from experiments.voc.bcos.experiment_parameters import exps
+from experiments.Cracks.bcos.model import get_model
+from experiments.Cracks.bcos.experiment_parameters import exps
+#from experiments.voc.bcos.model import get_model
+#from experiments.voc.bcos.experiment_parameters import exps
 from data.data_handler import Data
 from data.data_transforms import AddInverse
 from interpretability.utils import grad_to_img, explanation_mode
@@ -46,8 +46,8 @@ def main(args):
     # load model and dataset (to get transforms)
     exp_params = exps["inception_v3"]
     exp_params['load_pretrained'] = True
-#    data = Data("Cracks", only_test_loader=False, **exp_params)
-    data = Data("voc", only_test_loader=False, **exp_params)
+    data = Data("Cracks", only_test_loader=False, **exp_params)
+#    data = Data("voc", only_test_loader=False, **exp_params)
     data_loader = data.get_test_loader()
 
     model = get_model(exp_params).cuda()
@@ -55,64 +55,83 @@ def main(args):
     t = transforms.Compose([transforms.Resize(320), MyToTensor()])
     
     # there is a mismatch in class indices between dataset used in the bcos training and what is expected in mmsegmentation --> two separate dicts
-#    class_to_idx_mask = {'Arrachement_pelade':0,
-#                         'Faiencage':1,
-#                         'Nid_de_poule':2,
-#                         'Transversale':3,
-#                         'Longitudinale':4,
-#                         'Reparation':5}
+    class_to_idx_mask = {'Arrachement_pelade':0,
+                         'Faiencage':1,
+                         'Nid_de_poule':2,
+                         'Transversale':3,
+                         'Longitudinale':4,
+                         'Pontage_de_fissures':5,
+                         'Remblaiement_de_tranchees':6,
+                         'Raccord_de_chaussee':7,
+                         'Comblage_de_trou_ou_Projection_d_enrobe':8,
+                         'Bouche_a_clef':9,
+                         'Grille_avaloir':10,
+                         'Regard_tampon':11
+    }
+
+    class_to_idx_bcos = {'Arrachement_pelade':0,
+                         'Bouche_a_clef':1,
+                         'Comblage_de_trou_ou_Projection_d_enrobe':2,
+                         'Faiencage':3,
+                         'Grille_avaloir':4,
+                         'Longitudinale':5,
+                         'Nid_de_poule':6,
+                         'Pontage_de_fissures':7,
+                         'Raccord_de_chaussee':8,
+                         'Regard_tampon':9,
+                         'Remblaiement_de_tranchees':10,
+                         'Transversale':11
+    }
+
+#    class_to_idx_mask = {'aeroplane':0,
+#                         'bicycle':1,
+#                         'bird':2,
+#                         'boat':3,
+#                         'bottle':4,
+#                         'bus':5,
+#                         'car':6,
+#                         'cat':7,
+#                         'chair':8,
+#                         'cow':9,
+#                         'diningtable':10,
+#                         'dog':11,
+#                         'horse':12,
+#                         'motorbike':13,
+#                         'person':14,
+#                         'pottedplant':15,
+#                         'sheep':16,
+#                         'sofa':17,
+#                         'train':18,
+#                         'tvmonitor':19}
 #
-#    class_to_idx_bcos = {'Arrachement_pelade':0,
-#                         'Faiencage':1,
-#                         'Longitudinale':2,
-#                         'Nid_de_poule':3,
-#                         'Reparation':4,
-#                         'Transversale':5}
-
-    class_to_idx_mask = {'aeroplane':0,
-                         'bicycle':1,
-                         'bird':2,
-                         'boat':3,
-                         'bottle':4,
-                         'bus':5,
-                         'car':6,
-                         'cat':7,
-                         'chair':8,
-                         'cow':9,
-                         'diningtable':10,
-                         'dog':11,
-                         'horse':12,
-                         'motorbike':13,
-                         'person':14,
-                         'pottedplant':15,
-                         'sheep':16,
-                         'sofa':17,
-                         'train':18,
-                         'tvmonitor':19}
-
-    class_to_idx_bcos = {'aeroplane':0,
-                         'bicycle':1,
-                         'bird':2,
-                         'boat':3,
-                         'bottle':4,
-                         'bus':5,
-                         'car':6,
-                         'cat':7,
-                         'chair':8,
-                         'cow':9,
-                         'diningtable':10,
-                         'dog':11,
-                         'horse':12,
-                         'motorbike':13,
-                         'person':14,
-                         'pottedplant':15,
-                         'sheep':16,
-                         'sofa':17,
-                         'train':18,
-                         'tvmonitor':19}
+#    class_to_idx_bcos = {'aeroplane':0,
+#                         'bicycle':1,
+#                         'bird':2,
+#                         'boat':3,
+#                         'bottle':4,
+#                         'bus':5,
+#                         'car':6,
+#                         'cat':7,
+#                         'chair':8,
+#                         'cow':9,
+#                         'diningtable':10,
+#                         'dog':11,
+#                         'horse':12,
+#                         'motorbike':13,
+#                         'person':14,
+#                         'pottedplant':15,
+#                         'sheep':16,
+#                         'sofa':17,
+#                         'train':18,
+#                         'tvmonitor':19}
 
     # get names of images from detection dataset
     images_detection = glob.glob(f'{args.impath_detection}/*.jpg')
+
+    # get list of images already processed
+    already_processed = glob.glob(f'{args.output}/*png')
+    [images_detection.remove(im.replace(args.output, args.impath_detection).replace('png', 'jpg')) for im in already_processed]
+    print(f'{len(images_detection)} images after removing already processed')
 
     for imd in tqdm.tqdm(images_detection):
         # get cropped images from a given detection image

@@ -7,7 +7,7 @@ from experiment_utils import SimpleSchedule
 from modules.losses import CombinedLosses, LogitsBCE, AuxLoss
 from copy import deepcopy as copy
 from torch import nn
-from training.utils import TopKAcc
+from training.utils import TopKAcc, mAP
 
 _IMAGENET_PCA = {
     'eigval': [0.2175, 0.0188, 0.0045],
@@ -49,8 +49,8 @@ def get_aug_trans(n=2, m=9, s=160, min_scale=0.08):
 
 
 default_config = {
-    "virtual_batch_size": 32,
-    "batch_size": 32,
+    "virtual_batch_size": 8,
+    "batch_size": 8,
     "num_classes": 12,
     "loss": CombinedLosses(LogitsBCE()),
     "training": True,
@@ -59,17 +59,17 @@ default_config = {
     "keep_n_checkpoints": 2,
     "opti": "Adam",
     "opti_opts": dict(),
-    "eval_batch_f": TopKAcc((1,)),
+    "eval_batch_f": mAP,
     "logit_temperature": 10**(-1),
     "stopped": False,
     "base_lr": 3.125e-5,
-    "augmentation_transforms": get_aug_trans(m=9, s=224),
-    "test_time_transforms": transforms.Compose([transforms.Resize(256),
-                                                transforms.CenterCrop(224)]),
+    "augmentation_transforms": get_aug_trans(m=9, s=512),
+    "test_time_transforms": transforms.Compose([transforms.Resize(512),
+                                                transforms.CenterCrop(448)]),
     "add_inverse": True,
     "pre_process_length": 0,
     "lr_steps": 60,
-    "num_epochs": 40,
+    "num_epochs": 60,
     "pre_process_img": AddInverse(),
     "fraction_of_batch": 1,
     "deterministic": False,
@@ -91,9 +91,9 @@ pretrained = {
         "network": "{d}".format(d=net),
         "logit_temperature": 1,
         "logit_bias": 0,
-        "test_time_transforms": transforms.Compose([transforms.Resize(256),
-                                                    transforms.CenterCrop(224)]),
-        "to_probabilities": nn.Softmax(dim=1),
+#        "test_time_transforms": transforms.Compose([transforms.Resize(256),
+#                                                    transforms.CenterCrop(224)]),
+#        "to_probabilities": nn.Softmax(dim=1),
         "pre_process_img": NoTransform(),
     })
     for net in ["densenet121", "resnet34", "vgg11", "inception"]
@@ -155,9 +155,9 @@ inception_v3 = {
         "logit_temperature": 1,
         "base_lr": 5e-4,
         "network_opts": {"aux_logits": True},
-        "test_time_transforms": transforms.Compose([transforms.Resize(320), transforms.CenterCrop(299)]),
+#        "test_time_transforms": transforms.Compose([transforms.Resize(320), transforms.CenterCrop(299)]),
         "loss": CombinedLosses(LogitsBCE(), AuxLoss(1)),
-        "augmentation_transforms": get_aug_trans(m=9, s=299),
+ #       "augmentation_transforms": get_aug_trans(m=9, s=299),
     })
 }
 
